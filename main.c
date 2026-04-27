@@ -10,15 +10,31 @@ long get_time_ms(void)
 void insert_heap(t_dongle *dongle, t_edf info)
 {
     t_edf temp;
+    int i, head;
 
     dongle->quee[dongle->size] = info;
     dongle->size++;
-    if(dongle->size > 1 && dongle->quee[0].deadline > dongle->quee[1].deadline)
+    i = dongle->size - 1;
+    while (i > 0)
     {
-        temp = dongle->quee[0];
-        dongle->quee[0] = dongle->quee[1];
-        dongle->quee[1] = temp;
+        head = (i - 1) / 2;
+        if(dongle->quee[i].deadline >= dongle->quee[head].deadline)
+            break;
+        temp = dongle->quee[i];
+        dongle->quee[i] = dongle->quee[head];
+        dongle->quee[head] = temp;
+        i = head;
     }
+}
+
+t_edf pop_heap(t_dongle *dongle)
+{
+    t_edf temp;
+
+    temp = dongle->quee[0];
+    dongle->size--;
+    dongle->quee[0] = dongle->quee[dongle->size];
+    return temp;
 }
 
 void release_dongle(t_dongle *dongle)
@@ -51,7 +67,6 @@ void take_dongle(t_coder *coder, t_dongle *dongle)
         ts.tv_nsec = (total_ms % 1000) * 1000000;
         if (coder->sim->simulation_running == 0)
         {
-            fprintf(stderr, "coder %d leaving take_dongle\n", coder->id);
             dongle->size--;
             pthread_mutex_unlock(&dongle->pause_dongle);
             return;
@@ -68,8 +83,8 @@ void take_dongle(t_coder *coder, t_dongle *dongle)
         return;
     }
     pthread_mutex_unlock(&coder->sim->pause);
-    fprintf(stdout, "coder %d EXITED while loop in take_dongle\n", coder->id);
     dongle->is_taken = 1;
+    fprintf(stdout, "%ld %d has taken a dongle\n", get_time_ms() - coder->sim->start_time, coder->id);
     dongle->quee[0] = dongle->quee[1];
     dongle->size--;
     pthread_cond_broadcast(&dongle->wake_dongle);
@@ -96,17 +111,16 @@ void *simulation(void *arg)
         pthread_mutex_lock(&coder->sim->pause);
         if (coder->sim->simulation_running == 0)
         {
-            fprintf(stdout, "Number 1 coder %d EXIT at check N\n", coder->id);
             pthread_mutex_unlock(&coder->sim->pause);
             return (NULL);
         }
         pthread_mutex_unlock(&coder->sim->pause);
-        pthread_mutex_lock(&coder->sim->pause_print);
-        fprintf(stdout, "%ld %d is compling\n", get_time_ms() - coder->sim->start_time, coder->id);
-        pthread_mutex_unlock(&coder->sim->pause_print);
         pthread_mutex_lock(&coder->sim->pause);
         coder->last_compile = get_time_ms();
         pthread_mutex_unlock(&coder->sim->pause);
+        pthread_mutex_lock(&coder->sim->pause_print);
+        fprintf(stdout, "%ld %d is compiling\n", get_time_ms() - coder->sim->start_time, coder->id);
+        pthread_mutex_unlock(&coder->sim->pause_print);
         usleep(coder->sim->args.time_to_compile * 1000);
         release_dongle(coder->right_dongle);
         release_dongle(coder->left_dongle);
@@ -116,7 +130,6 @@ void *simulation(void *arg)
         pthread_mutex_lock(&coder->sim->pause);
         if (coder->sim->simulation_running == 0)
         {
-            fprintf(stdout, "Number 2 coder %d EXIT at check N\n", coder->id);
             pthread_mutex_unlock(&coder->sim->pause);
             return (NULL);
         }
@@ -128,7 +141,6 @@ void *simulation(void *arg)
         pthread_mutex_lock(&coder->sim->pause);
         if (coder->sim->simulation_running == 0)
         {
-            fprintf(stdout, "Number 3 coder %d EXIT at check N\n", coder->id);
             pthread_mutex_unlock(&coder->sim->pause);
             return (NULL);
         }
@@ -140,16 +152,13 @@ void *simulation(void *arg)
         pthread_mutex_lock(&coder->sim->pause);
         if (coder->sim->simulation_running == 0)
         {
-            fprintf(stdout, "Number 4 coder %d EXIT at check N\n", coder->id);
             pthread_mutex_unlock(&coder->sim->pause);
             return (NULL);
         }
         pthread_mutex_unlock(&coder->sim->pause);
-        fprintf(stdout, "coder %d EXITING\n", coder->id);
         pthread_mutex_lock(&coder->sim->pause);
     }
     pthread_mutex_unlock(&coder->sim->pause);
-    fprintf(stdout, "coder %d EXITING\n", coder->id);
     return NULL;
 }
 
@@ -182,27 +191,29 @@ void *monitor(void *arg)
                 pthread_mutex_unlock(&manger->pause);
                 while (x < manger->args.num_coders)
                 {
+                    pthread_mutex_lock(&manger->dongles[x].pause_dongle);
                     pthread_cond_broadcast(&manger->dongles[x].wake_dongle);
+                    pthread_mutex_unlock(&manger->dongles[x].pause_dongle);
                     x++;
                 }
                 break;
             }
             if (manger->coders[i].number_of_compilations >= manger->args.num_compiles_required)
                 num_of_comp++;
-            if(num_of_comp == manger->args.num_coders)
-            {
-                fprintf(stderr, "DEBUG monitor: stopping, num_of_comp=%d\n", num_of_comp);
-                manger->simulation_running = 0;
-                x = 0;
-                while (x < manger->args.num_coders)
-                {
-                    pthread_cond_broadcast(&manger->dongles[x].wake_dongle);
-                    x++;
-                }
-                break;
-            }
             pthread_mutex_unlock(&manger->pause);
             i++;
+        }
+        if(num_of_comp == manger->args.num_coders)
+        {
+            manger->simulation_running = 0;
+            x = 0;
+            while (x < manger->args.num_coders)
+            {
+                pthread_cond_broadcast(&manger->dongles[x].wake_dongle);
+                x++;
+            }
+            pthread_mutex_unlock(&manger->pause);
+            break;
         }
         pthread_mutex_lock(&manger->pause);
     }
@@ -256,6 +267,11 @@ int main(int ac, char **argv)
         list_coders[i].left_dongle = &get.dongles[i];
         list_coders[i].right_dongle = &get.dongles[(i + 1) % argument.num_coders];
         list_coders[i].sim = &get;
+        i++;
+    }
+    i = 0;
+    while (i < argument.num_coders)
+    {
         pthread_create(&list_coders[i].thread, NULL, &simulation, (void *)&list_coders[i]);
         i++;
     }
@@ -274,7 +290,5 @@ int main(int ac, char **argv)
     pthread_mutex_destroy(&get.pause);
     pthread_mutex_destroy(&get.pause_print);
     pthread_cond_destroy(&get.wake_up);
-    
-
     return 0;
 }

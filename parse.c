@@ -33,7 +33,7 @@ int parse_arg(char **av, t_args *info)
         return 1;
     }
     info->num_compiles_required = ft_atoi(av[6]);
-    if (info->num_compiles_required < 0)
+    if (info->num_compiles_required < 1)
     {
         fprintf(stderr ,"num_compiles_required is not valid");
         return 1;
