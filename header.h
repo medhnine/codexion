@@ -8,7 +8,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-
+# define RESET   "\033[0m"
+# define BURNOUT "\033[1;31m"
 
 typedef struct s_coder t_coder;
 typedef struct s_simulation t_simulation;
@@ -59,15 +60,18 @@ typedef struct s_simulation
 typedef struct s_coder
 {
     int id;
+    int done;
     pthread_t thread;
     t_dongle *left_dongle;
     t_dongle *right_dongle;
     long last_compile;
     int number_of_compilations;
     t_simulation *sim;
+    char *color;
 } t_coder;
 
 int	ft_atoi(char *str);
 int parse_arg(char **av, t_args *info);
+char *get_color(int id);
 
 # endif

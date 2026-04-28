@@ -1,5 +1,18 @@
 #include "header.h"
 
+char	*get_color(int id)
+{
+    const char *colors[6];
+
+    colors[0] = "\033[1;31m";
+    colors[1] = "\033[1;32m";
+    colors[2] = "\033[1;33m";
+    colors[3] = "\033[1;34m";
+    colors[4] = "\033[1;35m";
+    colors[5] = "\033[1;36m";
+    return ((char *)colors[(id - 1) % 6]);
+}
+
 int	ft_atoi(char *str)
 {
 	int	result, count;
