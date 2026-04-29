@@ -87,5 +87,7 @@ void    threads_manger(t_simulation *get, t_args argument, t_coder *list_coders)
 void	*monitor(void *arg);
 void	*monitor(void *arg);
 void	take_dongle(t_coder *coder, t_dongle *dongle);
+void log_line(t_coder *coder, char *message);
+int is_complete(t_coder *coder);
 
 # endif

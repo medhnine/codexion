@@ -10,7 +10,6 @@ static void wake_up_all(t_simulation *manger)
         pthread_cond_broadcast(&manger->dongles[i].wake_dongle);
         i++;
     }
-    
 }
 
 static int check_burnout(t_simulation *manger, int i)

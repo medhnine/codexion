@@ -36,19 +36,20 @@ static int whait_dongle(t_coder *coder, t_dongle *dongle)
 
 static int	claim_dongle(t_coder *coder, t_dongle *dongle)
 {
+	pthread_mutex_lock(&coder->sim->pause_print);
 	pthread_mutex_lock(&coder->sim->pause);
 	if (coder->sim->simulation_running == 0 || coder->done == 1)
 	{
 		dongle->size--;
 		pthread_mutex_unlock(&coder->sim->pause);
 		pthread_mutex_unlock(&dongle->pause_dongle);
+		pthread_mutex_unlock(&coder->sim->pause_print);
 		pthread_cond_broadcast(&dongle->wake_dongle);
 		return (1);
 	}
 	pthread_mutex_unlock(&coder->sim->pause);
 	pop_heap(dongle);
 	dongle->is_taken = 1;
-	pthread_mutex_lock(&coder->sim->pause_print);
 	fprintf(stdout, "%s%ld %d has taken a dongle%s\n", coder->color,
 		get_time_ms() - coder->sim->start_time, coder->id, RESET);
 	pthread_mutex_unlock(&coder->sim->pause_print);
