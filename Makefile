@@ -1,7 +1,7 @@
 Name = codexion
-SRCS = main.c parse.c utils.c
+SRCS = main.c parse.c utils.c tasks.c heap.c set_functions.c monitor.c mange_dongles.c
 CC = cc -g
-flags = -Wall -Wextra -Werror
+flags = -Wall -Wextra -Werror -pthread
 OBJS = $(SRCS:.c=.o)
 
 all: $(Name)

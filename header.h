@@ -30,7 +30,6 @@ typedef struct s_edf
 {
     int id;
     long deadline;
-
 } t_edf;
 
 typedef struct s_dongle
@@ -73,5 +72,20 @@ typedef struct s_coder
 int	ft_atoi(char *str);
 int parse_arg(char **av, t_args *info);
 char *get_color(int id);
+void	compile(t_coder *coder);
+void	debuging(t_coder *coder);
+void	refactoring(t_coder *coder);
+long	get_time_ms(void);
+void	insert_heap(t_dongle *dongle, t_edf info);
+void	insert_down(t_dongle *dongle);
+t_edf	pop_heap(t_dongle *dongle);
+void	release_dongle(t_dongle *dongle);
+void	clean_up(void *target);
+void    intalaize_thredas(t_args argument, t_coder *list_coders, t_simulation *get);
+void	*simulation(void *arg);
+void    threads_manger(t_simulation *get, t_args argument, t_coder *list_coders);
+void	*monitor(void *arg);
+void	*monitor(void *arg);
+void	take_dongle(t_coder *coder, t_dongle *dongle);
 
 # endif

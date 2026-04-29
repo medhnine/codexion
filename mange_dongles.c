@@ -1,0 +1,68 @@
+#include"header.h"
+
+static void set_deadline(t_coder *coder, t_dongle *dongle)
+{
+    t_edf hold;
+    hold.id = coder->id;
+	if (coder->sim->args.scheduler == 0)
+		hold.deadline = get_time_ms();
+	else
+		hold.deadline = coder->last_compile + coder->sim->args.time_to_burnout;
+	insert_heap(dongle, hold);
+}
+
+static int whait_dongle(t_coder *coder, t_dongle *dongle)
+{
+    long			total_ms;
+	struct timespec	ts;
+
+	while (dongle->is_taken == 1 || (get_time_ms()
+			- dongle->release < coder->sim->args.dongle_cooldown)
+		|| dongle->quee[0].id != coder->id)
+	{
+		total_ms = get_time_ms() + 1;
+		ts.tv_sec = total_ms / 1000;
+		ts.tv_nsec = (total_ms % 1000) * 1000000;
+		if (coder->sim->simulation_running == 0)
+		{
+			dongle->size--;
+			pthread_mutex_unlock(&dongle->pause_dongle);
+			return (1);
+		}
+		pthread_cond_timedwait(&dongle->wake_dongle, &dongle->pause_dongle, &ts);
+	}
+	return (0);
+}
+
+static int	claim_dongle(t_coder *coder, t_dongle *dongle)
+{
+	pthread_mutex_lock(&coder->sim->pause);
+	if (coder->sim->simulation_running == 0 || coder->done == 1)
+	{
+		dongle->size--;
+		pthread_mutex_unlock(&coder->sim->pause);
+		pthread_mutex_unlock(&dongle->pause_dongle);
+		pthread_cond_broadcast(&dongle->wake_dongle);
+		return (1);
+	}
+	pthread_mutex_unlock(&coder->sim->pause);
+	pop_heap(dongle);
+	dongle->is_taken = 1;
+	pthread_mutex_lock(&coder->sim->pause_print);
+	fprintf(stdout, "%s%ld %d has taken a dongle%s\n", coder->color,
+		get_time_ms() - coder->sim->start_time, coder->id, RESET);
+	pthread_mutex_unlock(&coder->sim->pause_print);
+	return (0);
+}
+
+void	take_dongle(t_coder *coder, t_dongle *dongle)
+{
+	pthread_mutex_lock(&dongle->pause_dongle);
+    set_deadline(coder, dongle);
+    if (whait_dongle(coder, dongle))
+        return;
+    if (claim_dongle(coder, dongle))
+        return;
+    pthread_cond_broadcast(&dongle->wake_dongle);
+    pthread_mutex_unlock(&dongle->pause_dongle);
+}
