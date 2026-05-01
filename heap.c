@@ -3,8 +3,9 @@
 void	insert_heap(t_dongle *dongle, t_edf info)
 {
 	t_edf	temp;
+	int		i;
+	int		head;
 
-	int i, head;
 	dongle->quee[dongle->size] = info;
 	dongle->size++;
 	i = dongle->size - 1;
@@ -20,12 +21,21 @@ void	insert_heap(t_dongle *dongle, t_edf info)
 	}
 }
 
+void	set_deadline(t_dongle *dongle, int index, long smallest)
+{
+	t_edf	temp;
+
+	temp = dongle->quee[index];
+	dongle->quee[index] = dongle->quee[smallest];
+	dongle->quee[smallest] = temp;
+	index = smallest;
+}
+
 void	insert_down(t_dongle *dongle)
 {
-	int		left;
-	t_edf	temp;
-	int		right;
 	long	smallest;
+	int		left;
+	int		right;
 	int		index;
 
 	index = 0;
@@ -41,12 +51,7 @@ void	insert_down(t_dongle *dongle)
 		else
 			smallest = left;
 		if (dongle->quee[index].deadline > dongle->quee[smallest].deadline)
-		{
-			temp = dongle->quee[index];
-			dongle->quee[index] = dongle->quee[smallest];
-			dongle->quee[smallest] = temp;
-			index = smallest;
-		}
+			set_deadline(dongle, index, smallest);
 		else
 			break ;
 	}

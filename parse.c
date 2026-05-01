@@ -1,7 +1,12 @@
 #include "header.h"
 
-int	parse_arg(char **av, t_args *info)
+int	parse_arg(int ac, char **av, t_args *info)
 {
+	if (ac != 9)
+	{
+		fprintf(stderr, "the number of arguments is not 9");
+		return (1);
+	}
 	info->num_coders = ft_atoi(av[1]);
 	if (info->num_coders < 1)
 	{

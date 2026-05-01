@@ -15,7 +15,8 @@ char	*get_color(int id)
 
 int	ft_atoi(char *str)
 {
-	int result, count;
+	int	result;
+	int	count;
 
 	while ((*str >= 9 && *str <= 13) || *str == 32)
 		str++;
@@ -37,7 +38,6 @@ int	ft_atoi(char *str)
 	}
 	if (count == 0 || *str != '\0')
 		return (-1);
-
 	return (result);
 }
 
@@ -47,10 +47,4 @@ long	get_time_ms(void)
 
 	gettimeofday(&tv, NULL);
 	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
-}
-
-void	clean_up(void *target)
-{
-	free(target);
-	target = NULL;
 }

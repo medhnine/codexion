@@ -35,7 +35,6 @@ typedef struct s_edf
 typedef struct s_dongle
 {
     pthread_mutex_t pause_dongle;
-    pthread_cond_t wake_dongle;
     t_edf quee[2];
     int size;
     int is_taken;
@@ -70,7 +69,7 @@ typedef struct s_coder
 } t_coder;
 
 int	ft_atoi(char *str);
-int parse_arg(char **av, t_args *info);
+int parse_arg(int ac, char **av, t_args *info);
 char *get_color(int id);
 void	compile(t_coder *coder);
 void	debuging(t_coder *coder);
@@ -80,11 +79,9 @@ void	insert_heap(t_dongle *dongle, t_edf info);
 void	insert_down(t_dongle *dongle);
 t_edf	pop_heap(t_dongle *dongle);
 void	release_dongle(t_dongle *dongle);
-void	clean_up(void *target);
 void    intalaize_thredas(t_args argument, t_coder *list_coders, t_simulation *get);
 void	*simulation(void *arg);
-void    threads_manger(t_simulation *get, t_args argument, t_coder *list_coders);
-void	*monitor(void *arg);
+void    threads_manger(t_args argument, t_coder *list_coders);
 void	*monitor(void *arg);
 void	take_dongle(t_coder *coder, t_dongle *dongle);
 void log_line(t_coder *coder, char *message);
