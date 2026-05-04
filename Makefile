@@ -1,23 +1,24 @@
-Name = codexion
-SRCS = main.c parse.c utils.c tasks.c heap.c set_functions.c monitor.c mange_dongles.c
-CC = cc -g
-flags = -Wall -Wextra -Werror -pthread
+NAME = codexion
+SRCS = $(wildcard files/*.c)
+CC = cc
+FLAGS = -Wall -Wextra -Werror -pthread
 OBJS = $(SRCS:.c=.o)
 
-all: $(Name)
+all: $(NAME)
 
-$(Name): $(OBJS)
-	$(CC) $(flags) $(OBJS) -o $(Name)
+$(NAME): $(OBJS)
+	$(CC) $(FLAGS) $(OBJS) -o $(NAME)
 
-%.o: %.c header.h
-	$(CC) $(flags) -c $< -o $@
+%.o: %.c files/header.h
+	$(CC) $(FLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJS)
 
 fclean: clean
-	rm -f $(Name)
+	rm -f $(NAME)
 
 re: fclean all
 
+.SECONDARY: $(OBJS)
 .PHONY: all clean fclean re

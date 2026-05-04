@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   main.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mohhnine <mohhnine@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/05/01 18:45:32 by mohhnine          #+#    #+#             */
+/*   Updated: 2026/05/03 02:05:27 by mohhnine         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "header.h"
 
 void	release_dongle(t_dongle *dongle)
@@ -17,6 +29,7 @@ void	dongle_set(t_coder *coder)
 	}
 	else
 	{
+		usleep(1000);
 		take_dongle(coder, coder->left_dongle);
 		take_dongle(coder, coder->right_dongle);
 	}
@@ -70,7 +83,9 @@ int	main(int ac, char **argv)
 	t_simulation	get;
 	pthread_t		manger;
 
-	if (parse_arg(ac, argv, &argument) == 1)
+	if (ac != 9)
+		return (fprintf(stderr, "the number of arguments is not 9"), 1);
+	if (parse_arg(argv, &argument) == 1)
 		return (1);
 	list_coders = malloc(sizeof(t_coder) * argument.num_coders);
 	get.start_time = get_time_ms();
